@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Clean the City Park!</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            font-family: 'Arial', sans-serif;
+            touch-action: none;
+        }
+
+        #game-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            background-image: url('park.jpg');
+            background-size: cover;
+            background-position: center;
+        }
+
+        .litter {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            font-size: 45px;
+            cursor: grab;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            user-select: none;
+            filter: drop-shadow(2px 2px 3px rgba(0,0,0,0.4));
+        }
+
+        #trash-bin {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            width: 140px;
+            height: 160px;
+            background-color: rgba(255, 255, 255, 0.5);
+            border: 4px dashed #2ed573; /* Green dash to match the park */
+            border-radius: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: #1b4d3e;
+            text-shadow: 1px 1px 1px white;
+        }
+
+        #trash-bin span { font-size: 55px; }
+
+        #back-btn {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            padding: 12px 24px;
+            background: #ffa502; /* Bright orange for visibility */
+            color: white;
+            border: none;
+            border-radius: 30px;
+            cursor: pointer;
+            font-size: 18px;
+            font-weight: bold;
+            z-index: 100;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+        }
+
+        #win-screen {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.85);
+            color: #f1c40f;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            text-align: center;
+        }
+
+        .trophy { font-size: 200px; animation: bounce 0.8s infinite alternate; }
+
+        @keyframes bounce { from { transform: scale(1); } to { transform: scale(1.15); } }
+
+        .play-again-btn {
+            margin-top: 20px;
+            padding: 15px 40px;
+            font-size: 24px;
+            background: #1e90ff;
+            color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+<div id="game-container">
+    <button id="back-btn" onclick="window.location.href='1.html'">← Back to Menu</button>
+
+    
+    <div id="trash-bin">
+        <span>🗑️</span>
+        <p>PARK BIN</p>
+    </div>
+
+    <div class="litter">🥤</div> <div class="litter">🍿</div> <div class="litter">🌯</div> <div class="litter">🍌</div> <div class="litter">🍕</div> <div class="litter">🍪</div> <div class="litter">📄</div> <div class="litter">🍼</div> <div class="litter">🥫</div> <div class="litter">🍩</div> </div>
+
+<div id="win-screen">
+    <div class="trophy">🏆</div>
+    <h1 style="font-size: 55px;">YOU DID IT!</h1>
+    <p style="font-size: 26px;">The Park is now beautiful and clean!</p>
+    <button class="play-again-btn" onclick="location.reload()">Start Over</button>
+</div>
+
+<script>
+    const litters = document.querySelectorAll('.litter');
+    const bin = document.getElementById('trash-bin');
+    const winScreen = document.getElementById('win-screen');
+    let itemsCleaned = 0;
+
+    function randomizePositions() {
+        litters.forEach(item => {
+            // Horizontal: 5% to 85% of the park width
+            const randomX = Math.floor(Math.random() * 80) + 5;
+            // Vertical: 65% to 92% (Focusing on the grass and path area)
+            const randomY = Math.floor(Math.random() * 27) + 65;
+            
+            item.style.left = randomX + 'vw';
+            item.style.top = randomY + 'vh';
+        });
+    }
+
+    randomizePositions();
+
+    litters.forEach(item => {
+        let offsetX, offsetY;
+
+        const moveItem = (e) => {
+            const clientX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
+            const clientY = e.type.includes('touch') ? e.touches[0].clientY : e.clientY;
+            
+            item.style.left = (clientX - offsetX) + 'px';
+            item.style.top = (clientY - offsetY) + 'px';
+        };
+
+        const stopItem = (e) => {
+            window.removeEventListener('mousemove', moveItem);
+            window.removeEventListener('mouseup', stopItem);
+            window.removeEventListener('touchmove', moveItem);
+            window.removeEventListener('touchend', stopItem);
+
+            const itemRect = item.getBoundingClientRect();
+            const binRect = bin.getBoundingClientRect();
+
+            if (itemRect.left < binRect.right &&
+                itemRect.right > binRect.left &&
+                itemRect.top < binRect.bottom &&
+                itemRect.bottom > binRect.top) {
+                
+                item.style.visibility = 'hidden';
+                itemsCleaned++;
+                
+                if (itemsCleaned === 10) {
+                    winScreen.style.display = 'flex';
+                }
+            }
+        };
+
+        const startItem = (e) => {
+            const clientX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
+            const clientY = e.type.includes('touch') ? e.touches[0].clientY : e.clientY;
+            
+            offsetX = clientX - item.offsetLeft;
+            offsetY = clientY - item.offsetTop;
+
+            window.addEventListener('mousemove', moveItem);
+            window.addEventListener('mouseup', stopItem);
+            window.addEventListener('touchmove', moveItem, { passive: false });
+            window.addEventListener('touchend', stopItem);
+        };
+
+        item.addEventListener('mousedown', startItem);
+        item.addEventListener('touchstart', startItem, { passive: false });
+    });
+</script>
+
+</body>
+</html>

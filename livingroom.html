@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Help Clean the Living Room!</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            font-family: 'Arial', sans-serif;
+            touch-action: none;
+        }
+
+        #game-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            background-image: url('livingroom.jpeg');
+            background-size: cover;
+            background-position: center;
+        }
+
+        .litter {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            font-size: 40px;
+            cursor: grab;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            user-select: none;
+            filter: drop-shadow(2px 2px 2px rgba(0,0,0,0.2));
+        }
+
+        #trash-bin {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            width: 130px;
+            height: 160px;
+            background-color: rgba(255, 255, 255, 0.4);
+            border: 4px dashed #6c5ce7; /* Soft purple dash to match the room tones */
+            border-radius: 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: #2d3436;
+            text-shadow: 1px 1px 1px white;
+        }
+
+        #trash-bin span { font-size: 50px; }
+
+        #back-btn {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            padding: 12px 24px;
+            background: #a29bfe;
+            color: white;
+            border: none;
+            border-radius: 30px;
+            cursor: pointer;
+            font-size: 18px;
+            font-weight: bold;
+            z-index: 100;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        #win-screen {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.9);
+            color: #6c5ce7;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            text-align: center;
+        }
+
+        .trophy { font-size: 180px; animation: bounce 0.8s infinite alternate; }
+
+        @keyframes bounce { from { transform: scale(1); } to { transform: scale(1.15); } }
+
+        .play-again-btn {
+            margin-top: 20px;
+            padding: 15px 35px;
+            font-size: 22px;
+            background: #6c5ce7;
+            color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+<div id="game-container">
+    <button id="back-btn" onclick="window.location.href='1.html'">← Back to Menu</button>
+    
+    <div id="trash-bin">
+        <span>🗑️</span>
+        <p>HOME BIN</p>
+    </div>
+
+    <div class="litter">🧦</div> <div class="litter">🍕</div> <div class="litter">🥤</div> <div class="litter">📄</div> <div class="litter">📦</div> <div class="litter">🍬</div> <div class="litter">🧸</div> <div class="litter">🍎</div> <div class="litter">🍩</div> <div class="litter">🥣</div> </div>
+
+<div id="win-screen">
+    <div class="trophy">🏆</div>
+    <h1 style="font-size: 50px;">SWEET HOME!</h1>
+    <p style="font-size: 24px;">The living room is cozy and clean now!</p>
+    <button class="play-again-btn" onclick="location.reload()">Clean Again</button>
+</div>
+
+<script>
+    const litters = document.querySelectorAll('.litter');
+    const bin = document.getElementById('trash-bin');
+    const winScreen = document.getElementById('win-screen');
+    let itemsCleaned = 0;
+
+    function randomizePositions() {
+        litters.forEach(item => {
+            // Horizontal: 10% to 80% (centered in the room)
+            const randomX = Math.floor(Math.random() * 70) + 10;
+            // Vertical: 55% to 85% (Mainly on the furniture and rug)
+            const randomY = Math.floor(Math.random() * 30) + 55;
+            
+            item.style.left = randomX + 'vw';
+            item.style.top = randomY + 'vh';
+        });
+    }
+
+    randomizePositions();
+
+    litters.forEach(item => {
+        let offsetX, offsetY;
+
+        const moveItem = (e) => {
+            const clientX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
+            const clientY = e.type.includes('touch') ? e.touches[0].clientY : e.clientY;
+            
+            item.style.left = (clientX - offsetX) + 'px';
+            item.style.top = (clientY - offsetY) + 'px';
+        };
+
+        const stopItem = (e) => {
+            window.removeEventListener('mousemove', moveItem);
+            window.removeEventListener('mouseup', stopItem);
+            window.removeEventListener('touchmove', moveItem);
+            window.removeEventListener('touchend', stopItem);
+
+            const itemRect = item.getBoundingClientRect();
+            const binRect = bin.getBoundingClientRect();
+
+            if (itemRect.left < binRect.right &&
+                itemRect.right > binRect.left &&
+                itemRect.top < binRect.bottom &&
+                itemRect.bottom > binRect.top) {
+                
+                item.style.visibility = 'hidden';
+                itemsCleaned++;
+                
+                if (itemsCleaned === 10) {
+                    winScreen.style.display = 'flex';
+                }
+            }
+        };
+
+        const startItem = (e) => {
+            const clientX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
+            const clientY = e.type.includes('touch') ? e.touches[0].clientY : e.clientY;
+            
+            offsetX = clientX - item.offsetLeft;
+            offsetY = clientY - item.offsetTop;
+
+            window.addEventListener('mousemove', moveItem);
+            window.addEventListener('mouseup', stopItem);
+            window.addEventListener('touchmove', moveItem, { passive: false });
+            window.addEventListener('touchend', stopItem);
+        };
+
+        item.addEventListener('mousedown', startItem);
+        item.addEventListener('touchstart', startItem, { passive: false });
+    });
+</script>
+
+</body>
+</html>

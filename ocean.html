@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Save the Reef: Clean the Ocean!</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            touch-action: none;
+            background-color: #001f3f; /* Deep ocean background fallback */
+        }
+
+        #game-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            background-image: url('ocean.jpg');
+            background-size: cover;
+            background-position: center;
+        }
+
+        /* Underwater tint effect */
+        #game-container::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0, 123, 255, 0.1); /* Soft blue tint */
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        .litter {
+            position: absolute;
+            width: 65px;
+            height: 65px;
+            font-size: 45px;
+            cursor: grab;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            user-select: none;
+            filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.5));
+            transition: transform 0.1s ease;
+        }
+
+        #trash-bin {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            width: 140px;
+            height: 160px;
+            background-color: rgba(255, 255, 255, 0.3);
+            border: 5px dashed #ff9f43; /* Bright coral color dashed border */
+            border-radius: 25px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: #ff9f43; /* Match the border */
+            text-shadow: 2px 2px 5px #fff;
+            z-index: 100;
+        }
+
+        #trash-bin span { font-size: 60px; }
+
+        #back-btn {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            padding: 14px 28px;
+            background: #ee5253; /* Bright coral-red for visibility */
+            color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 20px;
+            font-weight: bold;
+            z-index: 100;
+            box-shadow: 0 5px 15px rgba(238, 82, 83, 0.4);
+        }
+
+        #win-screen {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 31, 63, 0.95); /* Deep ocean dimming */
+            color: #55efc4; /* Seafoam green win text */
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            text-align: center;
+        }
+
+        .trophy { font-size: 200px; animation: bounce 0.8s infinite alternate; }
+
+        @keyframes bounce { from { transform: scale(1); } to { transform: scale(1.2); } }
+
+        .play-again-btn {
+            margin-top: 25px;
+            padding: 15px 40px;
+            font-size: 24px;
+            background: #10ac84; /* Deep teal green button */
+            color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: bold;
+            box-shadow: 0 5px 20px rgba(16, 172, 132, 0.4);
+        }
+    </style>
+</head>
+<body>
+
+<div id="game-container">
+    <button id="back-btn" onclick="window.location.href='1.html'">← Back to Menu</button>
+
+    
+    <div id="trash-bin">
+        <span>🗑️</span>
+        <p>REEF BIN</p>
+    </div>
+
+    <div class="litter">🧴</div> <div class="litter">🥤</div> <div class="litter">🧧</div> <div class="litter">👟</div> <div class="litter">🧊</div> <div class="litter">🕸️</div> <div class="litter">🧻</div> <div class="litter">🍾</div> <div class="litter">🥫</div> <div class="litter">📦</div> </div>
+
+<div id="win-screen">
+    <div class="trophy">🏆</div>
+    <h1 style="font-size: 60px;">CORAL GUARDIAN!</h1>
+    <p style="font-size: 28px;">The reef is clean and the sea turtles are happy!</p>
+    <button class="play-again-btn" onclick="location.reload()">Save the Reef Again</button>
+</div>
+
+<script>
+    const litters = document.querySelectorAll('.litter');
+    const bin = document.getElementById('trash-bin');
+    const winScreen = document.getElementById('win-screen');
+    let itemsCleaned = 0;
+
+    function randomizePositions() {
+        litters.forEach(item => {
+            // Horizontal: 10% to 85%
+            const randomX = Math.floor(Math.random() * 75) + 10;
+            // Vertical: 65% to 92% (Focusing on the coral and floor area)
+            const randomY = Math.floor(Math.random() * 27) + 65;
+            
+            item.style.left = randomX + 'vw';
+            item.style.top = randomY + 'vh';
+        });
+    }
+
+    randomizePositions();
+
+    litters.forEach(item => {
+        let offsetX, offsetY;
+
+        const moveItem = (e) => {
+            const clientX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
+            const clientY = e.type.includes('touch') ? e.touches[0].clientY : e.clientY;
+            
+            item.style.left = (clientX - offsetX) + 'px';
+            item.style.top = (clientY - offsetY) + 'px';
+        };
+
+        const stopItem = (e) => {
+            window.removeEventListener('mousemove', moveItem);
+            window.removeEventListener('mouseup', stopItem);
+            window.removeEventListener('touchmove', moveItem);
+            window.removeEventListener('touchend', stopItem);
+
+            const itemRect = item.getBoundingClientRect();
+            const binRect = bin.getBoundingClientRect();
+
+            if (itemRect.left < binRect.right &&
+                itemRect.right > binRect.left &&
+                itemRect.top < binRect.bottom &&
+                itemRect.bottom > binRect.top) {
+                
+                item.style.visibility = 'hidden';
+                itemsCleaned++;
+                
+                if (itemsCleaned === 10) {
+                    winScreen.style.display = 'flex';
+                }
+            }
+        };
+
+        const startItem = (e) => {
+            const clientX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
+            const clientY = e.type.includes('touch') ? e.touches[0].clientY : e.clientY;
+            
+            offsetX = clientX - item.offsetLeft;
+            offsetY = clientY - item.offsetTop;
+
+            window.addEventListener('mousemove', moveItem);
+            window.addEventListener('mouseup', stopItem);
+            window.addEventListener('touchmove', moveItem, { passive: false });
+            window.addEventListener('touchend', stopItem);
+        };
+
+        item.addEventListener('mousedown', startItem);
+        item.addEventListener('touchstart', startItem, { passive: false });
+    });
+</script>
+
+</body>
+</html>
