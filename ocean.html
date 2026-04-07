@@ -13,7 +13,7 @@
             overflow: hidden;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             touch-action: none;
-            background-color: #001f3f; /* Deep ocean background fallback */
+            background-color: #001f3f;
         }
 
         #game-container {
@@ -25,14 +25,20 @@
             background-position: center;
         }
 
-        /* Underwater tint effect */
         #game-container::before {
             content: '';
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
-            background-color: rgba(0, 123, 255, 0.1); /* Soft blue tint */
+            background-color: rgba(0, 123, 255, 0.1);
             z-index: 1;
             pointer-events: none;
+        }
+
+        /* FLOATING ANIMATION */
+        @keyframes float {
+            0% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-15px) rotate(5deg); }
+            100% { transform: translateY(0px) rotate(0deg); }
         }
 
         .litter {
@@ -47,7 +53,8 @@
             justify-content: center;
             user-select: none;
             filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.5));
-            transition: transform 0.1s ease;
+            touch-action: none; /* Prevents mobile scrolling while dragging */
+            animation: float 4s ease-in-out infinite; /* Makes trash float */
         }
 
         #trash-bin {
@@ -57,16 +64,16 @@
             width: 140px;
             height: 160px;
             background-color: rgba(255, 255, 255, 0.3);
-            border: 5px dashed #ff9f43; /* Bright coral color dashed border */
+            border: 5px dashed #ff9f43;
             border-radius: 25px;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             font-weight: bold;
-            color: #ff9f43; /* Match the border */
+            color: #ff9f43;
             text-shadow: 2px 2px 5px #fff;
-            z-index: 100;
+            z-index: 50; /* Lower than the active dragging item */
         }
 
         #trash-bin span { font-size: 60px; }
@@ -76,7 +83,7 @@
             top: 20px;
             left: 20px;
             padding: 14px 28px;
-            background: #ee5253; /* Bright coral-red for visibility */
+            background: #ee5253;
             color: white;
             border: none;
             border-radius: 50px;
@@ -94,30 +101,28 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 31, 63, 0.95); /* Deep ocean dimming */
-            color: #55efc4; /* Seafoam green win text */
+            background: rgba(0, 31, 63, 0.95);
+            color: #55efc4;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            z-index: 1000;
+            z-index: 2000;
             text-align: center;
         }
 
         .trophy { font-size: 200px; animation: bounce 0.8s infinite alternate; }
-
         @keyframes bounce { from { transform: scale(1); } to { transform: scale(1.2); } }
 
         .play-again-btn {
             margin-top: 25px;
             padding: 15px 40px;
             font-size: 24px;
-            background: #10ac84; /* Deep teal green button */
+            background: #10ac84;
             color: white;
             border: none;
             border-radius: 50px;
             cursor: pointer;
             font-weight: bold;
-            box-shadow: 0 5px 20px rgba(16, 172, 132, 0.4);
         }
     </style>
 </head>
@@ -125,14 +130,17 @@
 
 <div id="game-container">
     <button id="back-btn" onclick="window.location.href='1.html'">← Back to Menu</button>
-
     
     <div id="trash-bin">
         <span>🗑️</span>
         <p>REEF BIN</p>
     </div>
 
-    <div class="litter">🧴</div> <div class="litter">🥤</div> <div class="litter">🧧</div> <div class="litter">👟</div> <div class="litter">🧊</div> <div class="litter">🕸️</div> <div class="litter">🧻</div> <div class="litter">🍾</div> <div class="litter">🥫</div> <div class="litter">📦</div> </div>
+    <div class="litter">🧴</div> <div class="litter">🥤</div> <div class="litter">🧧</div> 
+    <div class="litter">👟</div> <div class="litter">🧊</div> <div class="litter">🕸️</div> 
+    <div class="litter">🧻</div> <div class="litter">🍾</div> <div class="litter">🥫</div> 
+    <div class="litter">📦</div> 
+</div>
 
 <div id="win-screen">
     <div class="trophy">🏆</div>
@@ -149,11 +157,8 @@
 
     function randomizePositions() {
         litters.forEach(item => {
-            // Horizontal: 10% to 85%
             const randomX = Math.floor(Math.random() * 75) + 10;
-            // Vertical: 65% to 92% (Focusing on the coral and floor area)
-            const randomY = Math.floor(Math.random() * 27) + 65;
-            
+            const randomY = Math.floor(Math.random() * 40) + 30; // Slightly higher spread for "floating" effect
             item.style.left = randomX + 'vw';
             item.style.top = randomY + 'vh';
         });
@@ -165,6 +170,7 @@
         let offsetX, offsetY;
 
         const moveItem = (e) => {
+            if (e.cancelable) e.preventDefault(); // Stop mobile from scrolling
             const clientX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
             const clientY = e.type.includes('touch') ? e.touches[0].clientY : e.clientY;
             
@@ -173,6 +179,10 @@
         };
 
         const stopItem = (e) => {
+            // Restore default Z-index and turn animation back on if not binned
+            item.style.zIndex = "10";
+            item.style.animation = "float 4s ease-in-out infinite";
+
             window.removeEventListener('mousemove', moveItem);
             window.removeEventListener('mouseup', stopItem);
             window.removeEventListener('touchmove', moveItem);
@@ -196,6 +206,13 @@
         };
 
         const startItem = (e) => {
+            if (e.cancelable) e.preventDefault();
+            
+            // Bring item to the very front so it doesn't go "behind" the bin
+            item.style.zIndex = "1000";
+            // Pause float animation while dragging for better control
+            item.style.animation = "none";
+
             const clientX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
             const clientY = e.type.includes('touch') ? e.touches[0].clientY : e.clientY;
             
